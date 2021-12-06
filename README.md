@@ -1,0 +1,1 @@
+This project is a simulation of a 3rd body of negligible mass when added to a 2-body system. 

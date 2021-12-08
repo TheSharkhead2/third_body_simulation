@@ -35,8 +35,7 @@ class InputBox:
         if event.type == pygame.KEYDOWN:
             if self.active:
                 if event.key == K_RETURN:
-                    print(self.text)
-                    self.text = ''
+                    self.active = False
                 elif event.key == K_BACKSPACE:
                     self.text = self.text[:-1]
                 else:
@@ -122,9 +121,27 @@ class Sim:
 
         self.initial_zVel_input = InputBox(self.windowWidth-102, 200, 100, 30, self.font, text=str(self.thirdZvel))
 
+    def reset_sim(self):
+        #reset accelerations
+        self.thirdXacc = None
+        self.thirdYacc = None
+        self.thirdZacc = None
+
+        #set initial values based on text box
+        self.l = float(self.initial_l_input.text)
+        self.thirdX = float(self.initial_x_input.text)
+        self.thirdXvel = float(self.initial_xVel_input.text)
+        self.thirdY = float(self.initial_y_input.text)
+        self.thirdYvel = float(self.initial_yVel_input.text)
+        self.thirdZ = float(self.initial_z_input.text)
+        self.thirdZvel = float(self.initial_zVel_input.text)
+
     def on_event(self, event):
         if event.type == QUIT:
             self._running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == K_SLASH: #reset simulation with new initial values if user presses forward slash (random key, idk)
+                self.reset_sim()
 
         #handle all textbox event updates
         self.initial_l_input.handle_event(event)

@@ -3,6 +3,58 @@ import pygame, sys
 from pygame.locals import *
 from screeninfo import get_monitors #found in: https://stackoverflow.com/questions/3129322/how-do-i-get-monitor-resolution-in-python
 
+class InputBox:
+    """
+    Textbox class because I couldn't find a good library. But I still got
+    this class from: 
+    https://www.semicolonworld.com/question/55305/how-to-create-a-text-input-box-with-pygame
+
+    """
+
+    COLOR_INACTIVE = (1, 61, 77) #define color when box isn't highlighted
+    COLOR_ACTIVE = (0, 180, 224) #define color when box is highlighted
+
+    def __init__(self, x, y, w, h, font, text=''):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.color = self.COLOR_INACTIVE
+        self.text = text
+        self.FONT = font
+        self.txt_surface = self.FONT.render(text, True, self.color)
+        self.active = False
+
+    def handle_event(self, event):
+        if event.type == MOUSEBUTTONDOWN:
+            # If the user clicked on the input_box rect.
+            if self.rect.collidepoint(event.pos):
+                # Toggle the active variable.
+                self.active = not self.active
+            else:
+                self.active = False
+            # Change the current color of the input box.
+            self.color = self.COLOR_ACTIVE if self.active else self.COLOR_INACTIVE
+        if event.type == pygame.KEYDOWN:
+            if self.active:
+                if event.key == K_RETURN:
+                    print(self.text)
+                    self.text = ''
+                elif event.key == K_BACKSPACE:
+                    self.text = self.text[:-1]
+                else:
+                    self.text += event.unicode
+                # Re-render the text.
+                self.txt_surface = self.FONT.render(self.text, True, self.color)
+
+    def update(self):
+        # Resize the box if the text is too long.
+        width = max(200, self.txt_surface.get_width()+10)
+        self.rect.w = width
+
+    def draw(self, screen):
+        # Blit the text.
+        screen.blit(self.txt_surface, (self.rect.x+5, self.rect.y+5))
+        # Blit the rect.
+        pygame.draw.rect(screen, self.color, self.rect, 2)
+
 class Sim:
 
     windowWidth = int(get_monitors()[0].width)
@@ -19,24 +71,24 @@ class Sim:
         self.body1X = -1 
         self.body2X = 1
 
-        self.thirdRadius = 10 #radius of circle (third body rendered)
+        self.thirdRadius = 8 #radius of circle (third body rendered)
         self.thirdColor = (0, 0, 255) #color of third body
 
-        self.tPerFrame = 100 #number of delta Ts renders per frame
-        self.deltaT = 0.0001 #define standard time increment 
+        self.tPerFrame = 1000 #number of delta Ts renders per frame
+        self.deltaT = 0.00001 #define standard time increment 
 
         #set scales from x and y coords to pygame coords
-        self.xScale = 100
-        self.yScale = 100
+        self.xScale = 200
+        self.yScale = 200
 
-        self.l = 0.8 #define the lambda for the equations. 0 < lambda < 1
+        self.l = 0.7 #define the lambda for the equations. 0 < lambda < 1
 
         #set initial conditions for initial x and x velocity and y and y velocity and z and z velocity
-        self.thirdX = 1.6
+        self.thirdX = 0.2
         self.thirdXvel = 0
-        self.thirdY = -1
-        self.thirdYvel = 1
-        self.thirdZ = -0.1
+        self.thirdY = 0
+        self.thirdYvel = 0
+        self.thirdZ = 0
         self.thirdZvel = 0
 
         #empty variables for accelerations
@@ -48,19 +100,43 @@ class Sim:
         self.thirdRenderX = self.centerX + self.xScale * self.thirdX
         self.thirdRenderY = self.centerY + self.yScale * self.thirdY
 
-
     def on_init(self):
         pygame.init()
-        self._display = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
+        self._display = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE, vsync=1)
         pygame.display.set_caption("Third Body Simulation")
+
+        self.font = pygame.font.SysFont('Times New Roman', 20) #define font
+
+        #text input boxes for initial conditions 
+        self.initial_l_input = InputBox(self.windowWidth-180, 20, 100, 30, self.font, text=str(self.l))
+
+        self.initial_x_input = InputBox(self.windowWidth-175, 50, 100, 30, self.font, text=str(self.thirdX))
+
+        self.initial_y_input = InputBox(self.windowWidth-175, 80, 100, 30, self.font, text=str(self.thirdY))
+
+        self.initial_z_input = InputBox(self.windowWidth-175, 110, 100, 30, self.font, text=str(self.thirdZ))
+
+        self.initial_xVel_input = InputBox(self.windowWidth-102, 140, 100, 30, self.font, text=str(self.thirdXvel))
+
+        self.initial_yVel_input = InputBox(self.windowWidth-102, 170, 100, 30, self.font, text=str(self.thirdYvel))
+
+        self.initial_zVel_input = InputBox(self.windowWidth-102, 200, 100, 30, self.font, text=str(self.thirdZvel))
 
     def on_event(self, event):
         if event.type == QUIT:
             self._running = False
 
+        #handle all textbox event updates
+        self.initial_l_input.handle_event(event)
+        self.initial_x_input.handle_event(event)
+        self.initial_y_input.handle_event(event)
+        self.initial_z_input.handle_event(event)
+        self.initial_xVel_input.handle_event(event)
+        self.initial_yVel_input.handle_event(event)
+        self.initial_zVel_input.handle_event(event) 
 
     def on_loop(self):
-        
+
         for i in range(self.tPerFrame): #run position updates set number of times
             #update accelerations for x, y, and z 
             self._calc_d2dx()
@@ -72,18 +148,28 @@ class Sim:
             self.thirdY,self.thirdYvel = self._updateX(self.thirdY, self.thirdYvel, self.thirdYacc, t=self.deltaT)
             self.thirdZ,self.thirdZvel = self._updateX(self.thirdZ, self.thirdZvel, self.thirdZacc, t=self.deltaT)
 
+
+        #update all textboxes
+        self.initial_l_input.update()
+        self.initial_x_input.update()
+        self.initial_y_input.update()
+        self.initial_z_input.update()
+        self.initial_xVel_input.update()
+        self.initial_yVel_input.update()
+        self.initial_zVel_input.update()
+
         #update pygame render coords
         self._update_pygame_coords()        
 
     def on_render(self):
-        testFont = pygame.font.SysFont('Times New Roman', 20)
+        
         self._display.fill((0,0,0))
-        self._display.blit(testFont.render("Best Planet", True, (255, 255, 255)), (20, 20))
+        self._display.blit(self.font.render("Best Planet", True, (255, 255, 255)), (20, 20))
         
         #render third body coords 
-        self._display.blit(testFont.render("Third body x = {}".format(self.thirdX), True, (255, 255, 255)), (20, 40))
-        self._display.blit(testFont.render("Third body y = {}".format(self.thirdY), True, (255, 255, 255)), (20, 60))
-        self._display.blit(testFont.render("Third body z = {}".format(self.thirdZ), True, (255, 255, 255)), (20, 80))
+        self._display.blit(self.font.render("Third body x = {}".format(self.thirdX), True, (255, 255, 255)), (20, 40))
+        self._display.blit(self.font.render("Third body y = {}".format(self.thirdY), True, (255, 255, 255)), (20, 60))
+        self._display.blit(self.font.render("Third body z = {}".format(self.thirdZ), True, (255, 255, 255)), (20, 80))
 
         #render first and second body 
         pygame.draw.circle(self._display, (255,0,0), ( self.centerX + self.body1X*self.xScale, self.centerY ), self.thirdRadius*2 )
@@ -91,6 +177,24 @@ class Sim:
 
         #render third body
         pygame.draw.circle(self._display, self.thirdColor, (self.thirdRenderX, self.thirdRenderY), self.thirdRadius)
+
+        #render text box labels
+        self._display.blit(self.font.render("lambda value: ", True, (255, 255, 255)), (self.windowWidth-300, 20))
+        self._display.blit(self.font.render("initial x value: ", True, (255, 255, 255)), (self.windowWidth-300, 50))
+        self._display.blit(self.font.render("initial y value: ", True, (255, 255, 255)), (self.windowWidth-300, 80))
+        self._display.blit(self.font.render("initial z value: ", True, (255, 255, 255)), (self.windowWidth-300, 110))
+        self._display.blit(self.font.render("initial x velocity value: ", True, (255, 255, 255)), (self.windowWidth-300, 140))
+        self._display.blit(self.font.render("initial y velocity value: ", True, (255, 255, 255)), (self.windowWidth-300, 170))
+        self._display.blit(self.font.render("initial z velocity value: ", True, (255, 255, 255)), (self.windowWidth-300, 200))
+
+        #draw all text boxes
+        self.initial_l_input.draw(self._display)
+        self.initial_x_input.draw(self._display)
+        self.initial_y_input.draw(self._display)
+        self.initial_z_input.draw(self._display)
+        self.initial_xVel_input.draw(self._display)
+        self.initial_yVel_input.draw(self._display)
+        self.initial_zVel_input.draw(self._display)
 
     def on_quit(self):
         pygame.quit()
@@ -100,7 +204,8 @@ class Sim:
             self._running = False
         pygame.display.flip()
         while self._running:
-            for event in pygame.event.get():
+            events = pygame.event.get() #grab events
+            for event in events: #process all events
                 self.on_event(event)
             self.on_loop()
             self.on_render()

@@ -1,5 +1,5 @@
 #external library import
-import pygame, sys, random
+import pygame, sys, random, math
 from pygame.locals import *
 from screeninfo import get_monitors #found in: https://stackoverflow.com/questions/3129322/how-do-i-get-monitor-resolution-in-python
 
@@ -70,9 +70,6 @@ class Sim:
         self.centerX = int(self.windowWidth/2)
         self.centerY = int(self.windowHeight/2)
 
-        self.body1X = -1 
-        self.body2X = 1
-
         self.thirdRadius = 8 #radius of circle (third body rendered)
         self.thirdColor = (0, 0, 255) #color of third body
 
@@ -80,15 +77,15 @@ class Sim:
         self.deltaT = 0.00001 #define standard time increment 
 
         #set scales from x and y coords to pygame coords
-        self.xScale = 200
-        self.yScale = 200
+        self.xScale = 400
+        self.yScale = 400
 
         self.l = 0.7 #define the lambda for the equations. 0 < lambda < 1
 
         #set initial conditions for initial x and x velocity and y and y velocity and z and z velocity
         self.thirdX = 0.2
         self.thirdXvel = 0
-        self.thirdY = 0
+        self.thirdY = math.sqrt(3)/2 + 10**(-7)
         self.thirdYvel = 0
         self.thirdZ = 0
         self.thirdZvel = 0
@@ -101,6 +98,9 @@ class Sim:
         #define coordinates for third body in pygame. Center pixel plus the starting positions scaled by x and y scales
         self.thirdRenderX = self.centerX + self.xScale * self.thirdX
         self.thirdRenderY = self.centerY + self.yScale * self.thirdY * -1 #multiply by negative 1 so increase y is up
+
+        self.body1X = self.l
+        self.body2X = self.l - 1
 
     def on_init(self):
         pygame.init()
@@ -251,7 +251,7 @@ class Sim:
 
         #render first and second body 
         pygame.draw.circle(self._display, (255,0,0), ( self.centerX + self.body1X*self.xScale, self.centerY ), self.thirdRadius*2 )
-        pygame.draw.circle(self._display, (0, 255,0), ( self.centerX + self.body2X*self.xScale, self.centerY ), self.thirdRadius*2 )
+        pygame.draw.circle(self._display, (255, 0,0), ( self.centerX + self.body2X*self.xScale, self.centerY ), self.thirdRadius*2 )
 
         #render third body
         pygame.draw.circle(self._display, self.thirdColor, (self.thirdRenderX, self.thirdRenderY), self.thirdRadius)

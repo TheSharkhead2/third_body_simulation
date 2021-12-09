@@ -34,8 +34,9 @@ class InputBox:
             self.color = self.COLOR_ACTIVE if self.active else self.COLOR_INACTIVE
         if event.type == pygame.KEYDOWN:
             if self.active:
-                if event.key == K_RETURN:
+                if event.key == K_RETURN: #on key press enter, "deactivate" cell
                     self.active = False
+                    self.color = self.COLOR_INACTIVE
                 elif event.key == K_BACKSPACE:
                     self.text = self.text[:-1]
                 else:

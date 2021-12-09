@@ -1,5 +1,5 @@
 #external library import
-import pygame, sys
+import pygame, sys, random
 from pygame.locals import *
 from screeninfo import get_monitors #found in: https://stackoverflow.com/questions/3129322/how-do-i-get-monitor-resolution-in-python
 
@@ -63,6 +63,8 @@ class Sim:
     def __init__(self):
         self._running = True
         self._display = None
+
+        self.updateOrder = "random" #order in which x, y, and z of body is updated. "together" == all at once; "random" == random order
 
         #define "center pixel" coordinates
         self.centerX = int(self.windowWidth/2)
@@ -155,16 +157,74 @@ class Sim:
 
     def on_loop(self):
 
-        for i in range(self.tPerFrame): #run position updates set number of times
-            #update accelerations for x, y, and z 
-            self._calc_d2dx()
-            self._calc_d2dy()
-            self._calc_d2dz()
+        if self.updateOrder == "together":
+            for i in range(self.tPerFrame): #run position updates set number of times
+                #update accelerations for x, y, and z 
+                self._calc_d2dx()
+                self._calc_d2dy()
+                self._calc_d2dz()
 
-            #update positions and velocities 
-            self.thirdX,self.thirdXvel = self._updateX(self.thirdX, self.thirdXvel, self.thirdXacc, t=self.deltaT)
-            self.thirdY,self.thirdYvel = self._updateX(self.thirdY, self.thirdYvel, self.thirdYacc, t=self.deltaT)
-            self.thirdZ,self.thirdZvel = self._updateX(self.thirdZ, self.thirdZvel, self.thirdZacc, t=self.deltaT)
+                #update positions and velocities 
+                self.thirdX,self.thirdXvel = self._updateX(self.thirdX, self.thirdXvel, self.thirdXacc, t=self.deltaT)
+                self.thirdY,self.thirdYvel = self._updateX(self.thirdY, self.thirdYvel, self.thirdYacc, t=self.deltaT)
+                self.thirdZ,self.thirdZvel = self._updateX(self.thirdZ, self.thirdZvel, self.thirdZacc, t=self.deltaT)
+        
+        elif self.updateOrder == "random":
+            for i in range(self.tPerFrame): #run position updates set number of times
+                randomSeed = random.randint(1,6) #6 options for update order
+
+                if randomSeed == 1 or randomSeed == 4:
+                    self._calc_d2dx()
+                    self.thirdX,self.thirdXvel = self._updateX(self.thirdX, self.thirdXvel, self.thirdXacc, t=self.deltaT)
+
+                    if randomSeed == 1:
+                        self._calc_d2dy()
+                        self.thirdY,self.thirdYvel = self._updateX(self.thirdY, self.thirdYvel, self.thirdYacc, t=self.deltaT)
+
+                        self._calc_d2dz()                
+                        self.thirdZ,self.thirdZvel = self._updateX(self.thirdZ, self.thirdZvel, self.thirdZacc, t=self.deltaT)
+
+                    else: 
+                        self._calc_d2dz()                
+                        self.thirdZ,self.thirdZvel = self._updateX(self.thirdZ, self.thirdZvel, self.thirdZacc, t=self.deltaT)
+
+                        self._calc_d2dy()
+                        self.thirdY,self.thirdYvel = self._updateX(self.thirdY, self.thirdYvel, self.thirdYacc, t=self.deltaT)
+                
+                elif randomSeed == 2 or randomSeed == 5:
+                    self._calc_d2dy()
+                    self.thirdY,self.thirdYvel = self._updateX(self.thirdY, self.thirdYvel, self.thirdYacc, t=self.deltaT)
+
+                    if randomSeed == 1:
+                        self._calc_d2dx()
+                        self.thirdX,self.thirdXvel = self._updateX(self.thirdX, self.thirdXvel, self.thirdXacc, t=self.deltaT)
+
+                        self._calc_d2dz()                
+                        self.thirdZ,self.thirdZvel = self._updateX(self.thirdZ, self.thirdZvel, self.thirdZacc, t=self.deltaT)
+
+                    else: 
+                        self._calc_d2dz()                
+                        self.thirdZ,self.thirdZvel = self._updateX(self.thirdZ, self.thirdZvel, self.thirdZacc, t=self.deltaT)
+
+                        self._calc_d2dx()
+                        self.thirdX,self.thirdXvel = self._updateX(self.thirdX, self.thirdXvel, self.thirdXacc, t=self.deltaT)
+                else:
+                    self._calc_d2dz()                
+                    self.thirdZ,self.thirdZvel = self._updateX(self.thirdZ, self.thirdZvel, self.thirdZacc, t=self.deltaT)
+
+                    if randomSeed == 1:
+                        self._calc_d2dx()
+                        self.thirdX,self.thirdXvel = self._updateX(self.thirdX, self.thirdXvel, self.thirdXacc, t=self.deltaT)
+
+                        self._calc_d2dy()
+                        self.thirdY,self.thirdYvel = self._updateX(self.thirdY, self.thirdYvel, self.thirdYacc, t=self.deltaT)
+
+                    else: 
+                        self._calc_d2dy()
+                        self.thirdY,self.thirdYvel = self._updateX(self.thirdY, self.thirdYvel, self.thirdYacc, t=self.deltaT)
+
+                        self._calc_d2dx()
+                        self.thirdX,self.thirdXvel = self._updateX(self.thirdX, self.thirdXvel, self.thirdXacc, t=self.deltaT)
 
 
         #update all textboxes

@@ -103,7 +103,7 @@ class Sim:
         self.body2X = self.l - 1
 
         self.thirdPrevious = [] #list of previous locations of third body to make path
-        self.pathLength = 120
+        self.pathLength = 1200
 
     def on_init(self):
         pygame.init()
@@ -127,13 +127,13 @@ class Sim:
 
         self.initial_zVel_input = InputBox(self.windowWidth-102, 200, 100, 30, self.font, text=str(self.thirdZvel))
 
-    def add_pos(self, x, y, z):
+    def add_pos(self, x, y):
         """
         add position to list of previous positions for path
         
         """
 
-        self.thirdPrevious.append((x,y,z)) #append tuple
+        self.thirdPrevious.append((x,y)) #append tuple
         
         if len(self.thirdPrevious) > self.pathLength: #if list is over a certain length, cut list
             del self.thirdPrevious[0]
@@ -182,6 +182,9 @@ class Sim:
                 self.thirdX,self.thirdXvel = self._updateX(self.thirdX, self.thirdXvel, self.thirdXacc, t=self.deltaT)
                 self.thirdY,self.thirdYvel = self._updateX(self.thirdY, self.thirdYvel, self.thirdYacc, t=self.deltaT)
                 self.thirdZ,self.thirdZvel = self._updateX(self.thirdZ, self.thirdZvel, self.thirdZacc, t=self.deltaT)
+
+                if i % 100 == 0: #save position value every 100 calculations
+                    self.add_pos(self.thirdRenderX, self.thirdRenderY)    
         
         elif self.updateOrder == "random":
             for i in range(self.tPerFrame): #run position updates set number of times
@@ -240,6 +243,9 @@ class Sim:
                         self._calc_d2dx()
                         self.thirdX,self.thirdXvel = self._updateX(self.thirdX, self.thirdXvel, self.thirdXacc, t=self.deltaT)
 
+                if i % 100 == 0: #save position value every 100 calculations
+                    self.add_pos(self.thirdRenderX, self.thirdRenderY) 
+
 
         #update all textboxes
         self.initial_l_input.update()
@@ -251,7 +257,9 @@ class Sim:
         self.initial_zVel_input.update()
 
         #update pygame render coords
-        self._update_pygame_coords()        
+        self._update_pygame_coords()
+
+            
 
     def on_render(self):
         
@@ -263,12 +271,16 @@ class Sim:
         self._display.blit(self.font.render("Third body y = {}".format(self.thirdY), True, (255, 255, 255)), (20, 60))
         self._display.blit(self.font.render("Third body z = {}".format(self.thirdZ), True, (255, 255, 255)), (20, 80))
 
-        #render first and second body 
-        pygame.draw.circle(self._display, (255,0,0), ( self.centerX + self.body1X*self.xScale, self.centerY ), self.thirdRadius*2 )
-        pygame.draw.circle(self._display, (255, 0,0), ( self.centerX + self.body2X*self.xScale, self.centerY ), self.thirdRadius*2 )
+        #render path of third body 
+        for position, index in zip(self.thirdPrevious, list(range(len(self.thirdPrevious)))): #loop through all previous locations
+            pygame.draw.circle(self._display, (0, 0, int(index * 200/self.pathLength) ), position, self.thirdRadius)
 
         #render third body
         pygame.draw.circle(self._display, self.thirdColor, (self.thirdRenderX, self.thirdRenderY), self.thirdRadius)
+
+        #render first and second body 
+        pygame.draw.circle(self._display, (255,0,0), ( self.centerX + self.body1X*self.xScale, self.centerY ), self.thirdRadius*2 )
+        pygame.draw.circle(self._display, (255, 0,0), ( self.centerX + self.body2X*self.xScale, self.centerY ), self.thirdRadius*2 )
 
         #render text box labels
         self._display.blit(self.font.render("lambda value: ", True, (255, 255, 255)), (self.windowWidth-300, 20))
@@ -288,9 +300,7 @@ class Sim:
         self.initial_yVel_input.draw(self._display)
         self.initial_zVel_input.draw(self._display)
 
-        #render path of third body 
-        for position, index in zip(self.thirdPrevious, list(range(len(self.thirdPrevious)))): #loop through all previous locations
-            pygame.draw.circle(self._display, (0, 0, int(index * 200/120) ), position, self.thirdRadius)
+        
 
     def on_quit(self):
         pygame.quit()

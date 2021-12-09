@@ -102,6 +102,9 @@ class Sim:
         self.body1X = self.l
         self.body2X = self.l - 1
 
+        self.thirdPrevious = [] #list of previous locations of third body to make path
+        self.pathLength = 120
+
     def on_init(self):
         pygame.init()
         self._display = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE, vsync=1)
@@ -123,6 +126,17 @@ class Sim:
         self.initial_yVel_input = InputBox(self.windowWidth-102, 170, 100, 30, self.font, text=str(self.thirdYvel))
 
         self.initial_zVel_input = InputBox(self.windowWidth-102, 200, 100, 30, self.font, text=str(self.thirdZvel))
+
+    def add_pos(self, x, y, z):
+        """
+        add position to list of previous positions for path
+        
+        """
+
+        self.thirdPrevious.append((x,y,z)) #append tuple
+        
+        if len(self.thirdPrevious) > self.pathLength: #if list is over a certain length, cut list
+            del self.thirdPrevious[0]
 
     def reset_sim(self):
         #reset accelerations
@@ -273,6 +287,10 @@ class Sim:
         self.initial_xVel_input.draw(self._display)
         self.initial_yVel_input.draw(self._display)
         self.initial_zVel_input.draw(self._display)
+
+        #render path of third body 
+        for position, index in zip(self.thirdPrevious, list(range(len(self.thirdPrevious)))): #loop through all previous locations
+            pygame.draw.circle(self._display, (0, 0, int(index * 200/120) ), position, self.thirdRadius)
 
     def on_quit(self):
         pygame.quit()

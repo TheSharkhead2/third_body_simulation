@@ -97,7 +97,7 @@ class Sim:
 
         #define coordinates for third body in pygame. Center pixel plus the starting positions scaled by x and y scales
         self.thirdRenderX = self.centerX + self.xScale * self.thirdX
-        self.thirdRenderY = self.centerY + self.yScale * self.thirdY
+        self.thirdRenderY = self.centerY + self.yScale * self.thirdY * -1 #multiply by negative 1 so increase y is up
 
     def on_init(self):
         pygame.init()
@@ -238,7 +238,7 @@ class Sim:
 
         #update pygame coordinates for third body. Center pixel plus x and y coords multiplied by scaler
         self.thirdRenderX = self.centerX + self.xScale * self.thirdX 
-        self.thirdRenderY = self.centerY + self.yScale * self.thirdY
+        self.thirdRenderY = self.centerY + self.yScale * self.thirdY * -1 
 
     def _updateX(self, x, xVel, xAcc, t=0.0001):
         """

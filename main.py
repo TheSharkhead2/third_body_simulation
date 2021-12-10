@@ -15,6 +15,7 @@ class InputBox:
     COLOR_ACTIVE = (0, 180, 224) #define color when box is highlighted
 
     def __init__(self, x, y, w, h, font, text=''):
+        self.initial_width = w
         self.rect = pygame.Rect(x, y, w, h)
         self.color = self.COLOR_INACTIVE
         self.text = text
@@ -46,7 +47,7 @@ class InputBox:
 
     def update(self):
         # Resize the box if the text is too long.
-        width = max(200, self.txt_surface.get_width()+10)
+        width = max(self.initial_width, self.txt_surface.get_width()+10)
         self.rect.w = width
 
     def draw(self, screen):
@@ -112,21 +113,27 @@ class Sim:
         self.font = pygame.font.SysFont('Times New Roman', 20) #define font
 
         #text input boxes for initial conditions 
-        self.initial_l_input = InputBox(self.windowWidth-180, 20, 100, 30, self.font, text=str(self.l))
+        self.initial_l_input = InputBox(self.windowWidth-280, 20, 280, 30, self.font, text=str(self.l))
 
-        self.initial_x_input = InputBox(self.windowWidth-175, 50, 100, 30, self.font, text=str(self.thirdX))
+        self.initial_x_input = InputBox(self.windowWidth-275, 50, 275, 30, self.font, text=str(self.thirdX))
 
-        self.initial_y_input = InputBox(self.windowWidth-175, 80, 100, 30, self.font, text=str(self.thirdY))
+        self.initial_y_input = InputBox(self.windowWidth-275, 80, 275, 30, self.font, text=str(self.thirdY))
 
-        self.initial_z_input = InputBox(self.windowWidth-175, 110, 100, 30, self.font, text=str(self.thirdZ))
+        self.initial_z_input = InputBox(self.windowWidth-275, 110, 275, 30, self.font, text=str(self.thirdZ))
 
-        self.initial_xVel_input = InputBox(self.windowWidth-102, 140, 100, 30, self.font, text=str(self.thirdXvel))
+        self.initial_xVel_input = InputBox(self.windowWidth-202, 140, 202, 30, self.font, text=str(self.thirdXvel))
 
-        self.initial_yVel_input = InputBox(self.windowWidth-102, 170, 100, 30, self.font, text=str(self.thirdYvel))
+        self.initial_yVel_input = InputBox(self.windowWidth-202, 170, 202, 30, self.font, text=str(self.thirdYvel))
 
-        self.initial_zVel_input = InputBox(self.windowWidth-102, 200, 100, 30, self.font, text=str(self.thirdZvel))
+        self.initial_zVel_input = InputBox(self.windowWidth-202, 200, 202, 30, self.font, text=str(self.thirdZvel))
 
-        self.lagrange_point_input = InputBox(self.windowWidth-160, 230, 100, 30, self.font, text=("none")) #input box to start at a specific lagrange point (only have 4 and 5 currently available)
+        self.lagrange_point_input = InputBox(self.windowWidth-260, 230, 260, 30, self.font, text=("none")) #input box to start at a specific lagrange point (only have 4 and 5 currently available)
+
+        #errors for starting at lagrange point (if you want to look at behavor not quite exactly at point)
+        self.lagrange_point_errorX = InputBox(self.windowWidth-195, 260, 195, 30, self.font, text="0")
+        self.lagrange_point_errorY = InputBox(self.windowWidth-195, 290, 195, 30, self.font, text="0")
+
+        self.scale_input = InputBox(self.windowWidth-340, 320, 340, 30, self.font, text=str(self.scale)) #input box for changing scale
 
     def add_pos(self, x, y):
         """
@@ -154,8 +161,8 @@ class Sim:
 
             self.thirdZ = 0 #just set z to 0, it doesn't matter
 
-            self.thirdX = self.l - 0.5 #defined x coord
-            self.thirdY = (math.sqrt(3)/2) #defined y coord
+            self.thirdX = self.l - 0.5 + float(self.lagrange_point_errorX.text) #defined x coord plus error
+            self.thirdY = (math.sqrt(3)/2) + float(self.lagrange_point_errorY.text) #defined y coord plus error
 
         elif self.lagrange_point_input.text == "5": #if the user specified starting at L5, override other settings and start there
             self.l = float(self.initial_l_input.text) #only take in other parameter of lambda as it affects lagrange points
@@ -166,9 +173,9 @@ class Sim:
 
             self.thirdZ = 0 #just set z to 0, it doesn't matter
 
-            self.thirdX = self.l - 0.5 #defined x coord
-            self.thirdY = -(math.sqrt(3)/2) #defined y coord
-            
+            self.thirdX = self.l - 0.5 + float(self.lagrange_point_errorX.text) #defined x coord plus error
+            self.thirdY = -(math.sqrt(3)/2) + float(self.lagrange_point_errorY.text) #defined y coord plus error
+
         else: #if no lagrange point is specified, use defined initial values
             #set initial values based on text box
             self.l = float(self.initial_l_input.text)
@@ -185,6 +192,8 @@ class Sim:
         if event.type == pygame.KEYDOWN:
             if event.key == K_SLASH: #reset simulation with new initial values if user presses forward slash (random key, idk)
                 self.reset_sim()
+            if event.key == pygame.K_BACKQUOTE: #set scale if backquote pressed
+                self.scale = int(self.scale_input.text)
 
         #handle all textbox event updates
         self.initial_l_input.handle_event(event)
@@ -195,6 +204,9 @@ class Sim:
         self.initial_yVel_input.handle_event(event)
         self.initial_zVel_input.handle_event(event) 
         self.lagrange_point_input.handle_event(event)
+        self.lagrange_point_errorX.handle_event(event)
+        self.lagrange_point_errorY.handle_event(event)
+        self.scale_input.handle_event(event)
 
     def on_loop(self):
 
@@ -343,6 +355,9 @@ class Sim:
         self.initial_yVel_input.update()
         self.initial_zVel_input.update()
         self.lagrange_point_input.update()
+        self.lagrange_point_errorX.update()
+        self.lagrange_point_errorY.update()
+        self.scale_input.update()
 
         #update pygame render coords
         self._update_pygame_coords()        
@@ -377,14 +392,17 @@ class Sim:
         pygame.draw.circle(self._display, (255, 0,0), ( self.centerX + self.body2X*self.scale, self.centerY ), self.thirdRadius*2 )
 
         #render text box labels
-        self._display.blit(self.font.render("lambda value: ", True, (255, 255, 255)), (self.windowWidth-300, 20))
-        self._display.blit(self.font.render("initial x value: ", True, (255, 255, 255)), (self.windowWidth-300, 50))
-        self._display.blit(self.font.render("initial y value: ", True, (255, 255, 255)), (self.windowWidth-300, 80))
-        self._display.blit(self.font.render("initial z value: ", True, (255, 255, 255)), (self.windowWidth-300, 110))
-        self._display.blit(self.font.render("initial x velocity value: ", True, (255, 255, 255)), (self.windowWidth-300, 140))
-        self._display.blit(self.font.render("initial y velocity value: ", True, (255, 255, 255)), (self.windowWidth-300, 170))
-        self._display.blit(self.font.render("initial z velocity value: ", True, (255, 255, 255)), (self.windowWidth-300, 200))
-        self._display.blit(self.font.render("Lagrange Point: ", True, (255, 255, 255)), (self.windowWidth-300, 230))
+        self._display.blit(self.font.render("lambda value: ", True, (255, 255, 255)), (self.windowWidth-400, 20))
+        self._display.blit(self.font.render("initial x value: ", True, (255, 255, 255)), (self.windowWidth-400, 50))
+        self._display.blit(self.font.render("initial y value: ", True, (255, 255, 255)), (self.windowWidth-400, 80))
+        self._display.blit(self.font.render("initial z value: ", True, (255, 255, 255)), (self.windowWidth-400, 110))
+        self._display.blit(self.font.render("initial x velocity value: ", True, (255, 255, 255)), (self.windowWidth-400, 140))
+        self._display.blit(self.font.render("initial y velocity value: ", True, (255, 255, 255)), (self.windowWidth-400, 170))
+        self._display.blit(self.font.render("initial z velocity value: ", True, (255, 255, 255)), (self.windowWidth-400, 200))
+        self._display.blit(self.font.render("Lagrange Point: ", True, (255, 255, 255)), (self.windowWidth-400, 230))
+        self._display.blit(self.font.render("Lagrange Point Error X: ", True, (255, 255, 255)), (self.windowWidth-400, 260))
+        self._display.blit(self.font.render("Lagrange Point Error Y: ", True, (255, 255, 255)), (self.windowWidth-400, 290))
+        self._display.blit(self.font.render("Scale: ", True, (255, 255, 255)), (self.windowWidth-400, 320))
 
         #draw all text boxes
         self.initial_l_input.draw(self._display)
@@ -395,8 +413,9 @@ class Sim:
         self.initial_yVel_input.draw(self._display)
         self.initial_zVel_input.draw(self._display)
         self.lagrange_point_input.draw(self._display)
-
-        
+        self.lagrange_point_errorX.draw(self._display)
+        self.lagrange_point_errorY.draw(self._display)
+        self.scale_input.draw(self._display)
 
     def on_quit(self):
         pygame.quit()

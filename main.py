@@ -126,7 +126,7 @@ class Sim:
 
         self.initial_zVel_input = InputBox(self.windowWidth-102, 200, 100, 30, self.font, text=str(self.thirdZvel))
 
-        self.lagrange_point_input = InputBox(self.windowWidth-102, 230, 100, 30, self.font, text=("none")) #input box to start at a specific lagrange point (only have 4 and 5 currently available)
+        self.lagrange_point_input = InputBox(self.windowWidth-160, 230, 100, 30, self.font, text=("none")) #input box to start at a specific lagrange point (only have 4 and 5 currently available)
 
     def add_pos(self, x, y):
         """
@@ -145,14 +145,39 @@ class Sim:
         self.thirdYacc = None
         self.thirdZacc = None
 
-        #set initial values based on text box
-        self.l = float(self.initial_l_input.text)
-        self.thirdX = float(self.initial_x_input.text)
-        self.thirdXvel = float(self.initial_xVel_input.text)
-        self.thirdY = float(self.initial_y_input.text)
-        self.thirdYvel = float(self.initial_yVel_input.text)
-        self.thirdZ = float(self.initial_z_input.text)
-        self.thirdZvel = float(self.initial_zVel_input.text)
+        if self.lagrange_point_input.text == "4": #if the user specified starting at L4, override other settings and start there
+            self.l = float(self.initial_l_input.text) #only take in other parameter of lambda as it affects lagrange points
+            #reset velocities
+            self.thirdXvel = 0
+            self.thirdYvel = 0
+            self.thirdZvel = 0
+
+            self.thirdZ = 0 #just set z to 0, it doesn't matter
+
+            self.thirdX = self.l - 0.5 #defined x coord
+            self.thirdY = (math.sqrt(3)/2) #defined y coord
+
+        elif self.lagrange_point_input.text == "5": #if the user specified starting at L5, override other settings and start there
+            self.l = float(self.initial_l_input.text) #only take in other parameter of lambda as it affects lagrange points
+            #reset velocities
+            self.thirdXvel = 0
+            self.thirdYvel = 0
+            self.thirdZvel = 0
+
+            self.thirdZ = 0 #just set z to 0, it doesn't matter
+
+            self.thirdX = self.l - 0.5 #defined x coord
+            self.thirdY = -(math.sqrt(3)/2) #defined y coord
+            
+        else: #if no lagrange point is specified, use defined initial values
+            #set initial values based on text box
+            self.l = float(self.initial_l_input.text)
+            self.thirdX = float(self.initial_x_input.text)
+            self.thirdXvel = float(self.initial_xVel_input.text)
+            self.thirdY = float(self.initial_y_input.text)
+            self.thirdYvel = float(self.initial_yVel_input.text)
+            self.thirdZ = float(self.initial_z_input.text)
+            self.thirdZvel = float(self.initial_zVel_input.text)
 
     def on_event(self, event):
         if event.type == QUIT:

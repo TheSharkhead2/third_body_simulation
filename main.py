@@ -126,6 +126,8 @@ class Sim:
 
         self.initial_zVel_input = InputBox(self.windowWidth-102, 200, 100, 30, self.font, text=str(self.thirdZvel))
 
+        self.lagrange_point_input = InputBox(self.windowWidth-102, 230, 100, 30, self.font, text=("none")) #input box to start at a specific lagrange point (only have 4 and 5 currently available)
+
     def add_pos(self, x, y):
         """
         add position to list of previous positions for path
@@ -167,6 +169,7 @@ class Sim:
         self.initial_xVel_input.handle_event(event)
         self.initial_yVel_input.handle_event(event)
         self.initial_zVel_input.handle_event(event) 
+        self.lagrange_point_input.handle_event(event)
 
     def on_loop(self):
 
@@ -314,6 +317,7 @@ class Sim:
         self.initial_xVel_input.update()
         self.initial_yVel_input.update()
         self.initial_zVel_input.update()
+        self.lagrange_point_input.update()
 
         #update pygame render coords
         self._update_pygame_coords()        
@@ -355,6 +359,7 @@ class Sim:
         self._display.blit(self.font.render("initial x velocity value: ", True, (255, 255, 255)), (self.windowWidth-300, 140))
         self._display.blit(self.font.render("initial y velocity value: ", True, (255, 255, 255)), (self.windowWidth-300, 170))
         self._display.blit(self.font.render("initial z velocity value: ", True, (255, 255, 255)), (self.windowWidth-300, 200))
+        self._display.blit(self.font.render("Lagrange Point: ", True, (255, 255, 255)), (self.windowWidth-300, 230))
 
         #draw all text boxes
         self.initial_l_input.draw(self._display)
@@ -364,6 +369,7 @@ class Sim:
         self.initial_xVel_input.draw(self._display)
         self.initial_yVel_input.draw(self._display)
         self.initial_zVel_input.draw(self._display)
+        self.lagrange_point_input.draw(self._display)
 
         
 

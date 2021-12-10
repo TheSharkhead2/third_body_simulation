@@ -324,13 +324,17 @@ class Sim:
         self._display.blit(self.font.render("Best Planet", True, (255, 255, 255)), (20, 20))
         
         #render third body coords 
-        self._display.blit(self.font.render("Third body x = {}".format(self.thirdX), True, (255, 255, 255)), (20, 40))
-        self._display.blit(self.font.render("Third body y = {}".format(self.thirdY), True, (255, 255, 255)), (20, 60))
-        self._display.blit(self.font.render("Third body z = {}".format(self.thirdZ), True, (255, 255, 255)), (20, 80))
+        self._display.blit(self.font.render(" x = {}".format(self.thirdX), True, (255, 255, 255)), (20, 50))
+        self._display.blit(self.font.render(" y = {}".format(self.thirdY), True, (255, 255, 255)), (20, 70))
+        self._display.blit(self.font.render(" z = {}".format(self.thirdZ), True, (255, 255, 255)), (20, 90))
 
-        self._display.blit(self.font.render("Third body x velocity = {}".format(self.thirdXvel), True, (255, 255, 255)), (20, 100))
-        self._display.blit(self.font.render("Third body y velocity = {}".format(self.thirdYvel), True, (255, 255, 255)), (20, 120))
-        self._display.blit(self.font.render("Third body z velocity = {}".format(self.thirdZvel), True, (255, 255, 255)), (20, 140))
+        self._display.blit(self.font.render(" x velocity = {}".format(self.thirdXvel), True, (255, 255, 255)), (20, 110))
+        self._display.blit(self.font.render(" y velocity = {}".format(self.thirdYvel), True, (255, 255, 255)), (20, 130))
+        self._display.blit(self.font.render(" z velocity = {}".format(self.thirdZvel), True, (255, 255, 255)), (20, 150))
+
+        self._display.blit(self.font.render(" x acceleration = {}".format(self.thirdXacc), True, (255, 255, 255)), (20, 170))
+        self._display.blit(self.font.render(" y acceleration = {}".format(self.thirdYacc), True, (255, 255, 255)), (20, 190))
+        self._display.blit(self.font.render(" z acceleration = {}".format(self.thirdZacc), True, (255, 255, 255)), (20, 210))
 
         #render path of third body 
         for position, index in zip(self.thirdPrevious, list(range(len(self.thirdPrevious)))): #loop through all previous locations

@@ -76,9 +76,8 @@ class Sim:
         self.tPerFrame = 1000 #number of delta Ts renders per frame
         self.deltaT = 0.00001 #define standard time increment 
 
-        #set scales from x and y coords to pygame coords
-        self.xScale = 400
-        self.yScale = 400
+        #set scale from x and y coords to pygame coords
+        self.scale = 400
 
         self.l = 0.7 #define the lambda for the equations. 0 < lambda < 1
 
@@ -96,14 +95,14 @@ class Sim:
         self.thirdZacc = None
 
         #define coordinates for third body in pygame. Center pixel plus the starting positions scaled by x and y scales
-        self.thirdRenderX = self.centerX + self.xScale * self.thirdX
-        self.thirdRenderY = self.centerY + self.yScale * self.thirdY * -1 #multiply by negative 1 so increase y is up
+        self.thirdRenderX = self.centerX + self.scale * self.thirdX
+        self.thirdRenderY = self.centerY + self.scale * self.thirdY * -1 #multiply by negative 1 so increase y is up
 
         self.body1X = self.l
         self.body2X = self.l - 1
 
         self.thirdPrevious = [] #list of previous locations of third body to make path
-        self.pathLength = 1200
+        self.pathLength = 1200 #number of saved positions in path
 
     def on_init(self):
         pygame.init()
@@ -171,6 +170,8 @@ class Sim:
 
     def on_loop(self):
 
+        ### SHOULD ADD COLLISION DETECTION ###
+
         if self.updateOrder == "together":
             for i in range(self.tPerFrame): #run position updates set number of times
                 #update accelerations for x, y, and z 
@@ -182,6 +183,32 @@ class Sim:
                 self.thirdX,self.thirdXvel = self._updateX(self.thirdX, self.thirdXvel, self.thirdXacc, t=self.deltaT)
                 self.thirdY,self.thirdYvel = self._updateX(self.thirdY, self.thirdYvel, self.thirdYacc, t=self.deltaT)
                 self.thirdZ,self.thirdZvel = self._updateX(self.thirdZ, self.thirdZvel, self.thirdZacc, t=self.deltaT)
+
+                if (math.sqrt((self.thirdX - self.body1X)**2 + (self.thirdY)**2)) < ((self.thirdRadius*3)/self.scale): #if the magnitude of the difference vector between the third body and the first body is greater than 3 times the third body radius, then call this a collision (3 times because other two bodies have a radius of thirdRadius*2, divide by 400 because radius is in pygame coords)
+                    differenceVector = (self.thirdX - self.body1X, self.thirdY) #recalculate vector representing difference between bodies
+
+                    unitDifferenceVec = ( 3*self.thirdRadius/self.scale * differenceVector[0]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2), 3*self.thirdRadius/self.scale * differenceVector[1]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2) ) #normalize vector to be magnitude of 3*thirdRadius (such that you can get a minimum distance w/o collision)
+
+                    necessaryDisplacementVec = (unitDifferenceVec[0]-differenceVector[0], unitDifferenceVec[1]-differenceVector[1]) #calculate vector representing necessary displacement of third body out of collision
+
+                    #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
+                    self.thirdX + necessaryDisplacementVec[0]
+                    self.thirdY + necessaryDisplacementVec[1]
+                    self.thirdXvel = 0
+                    self.thirdYvel = 0
+
+                if (math.sqrt((self.thirdX - self.body2X)**2 + (self.thirdY)**2)) < ((self.thirdRadius*3)/self.scale): #if the magnitude of the difference vector between the third body and the second body is greater than 3 times the third body radius, then call this a collision (3 times because other two bodies have a radius of thirdRadius*2, divide by 400 because radius is in pygame coords)
+                    differenceVector = (self.thirdX - self.body2X, self.thirdY) #recalculate vector representing difference between bodies
+
+                    unitDifferenceVec = ( 3*self.thirdRadius/self.scale * differenceVector[0]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2), 3*self.thirdRadius/self.scale * differenceVector[1]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2) ) #normalize vector to be magnitude of 3*thirdRadius (such that you can get a minimum distance w/o collision)
+
+                    necessaryDisplacementVec = (unitDifferenceVec[0]-differenceVector[0], unitDifferenceVec[1]-differenceVector[1]) #calculate vector representing necessary displacement of third body out of collision
+
+                    #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
+                    self.thirdX + necessaryDisplacementVec[0]
+                    self.thirdY + necessaryDisplacementVec[1]
+                    self.thirdXvel = 0
+                    self.thirdYvel = 0
 
                 if i % 100 == 0: #save position value every 100 calculations
                     self.add_pos(self.thirdRenderX, self.thirdRenderY)    
@@ -243,6 +270,38 @@ class Sim:
                         self._calc_d2dx()
                         self.thirdX,self.thirdXvel = self._updateX(self.thirdX, self.thirdXvel, self.thirdXacc, t=self.deltaT)
 
+                if (math.sqrt((self.thirdX - self.body1X)**2 + (self.thirdY)**2)) < ((self.thirdRadius*3)/self.scale): #if the magnitude of the difference vector between the third body and the first body is greater than 3 times the third body radius, then call this a collision (3 times because other two bodies have a radius of thirdRadius*2, divide by 400 because radius is in pygame coords)
+
+                    differenceVector = (self.thirdX - self.body1X, self.thirdY) #recalculate vector representing difference between bodies
+
+                    unitDifferenceVec = ( 3*self.thirdRadius/self.scale * differenceVector[0]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2), 3*self.thirdRadius/self.scale * differenceVector[1]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2) ) #normalize vector to be magnitude of 3*thirdRadius (such that you can get a minimum distance w/o collision)
+
+                    necessaryDisplacementVec = (unitDifferenceVec[0]-differenceVector[0], unitDifferenceVec[1]-differenceVector[1]) #calculate vector representing necessary displacement of third body out of collision
+
+                    print(necessaryDisplacementVec)
+
+                    #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
+                    self.thirdX + necessaryDisplacementVec[0]
+                    self.thirdY + necessaryDisplacementVec[1]
+                    self.thirdXvel = 0
+                    self.thirdYvel = 0
+
+                if (math.sqrt((self.thirdX - self.body2X)**2 + (self.thirdY)**2)) < ((self.thirdRadius*3)/self.scale): #if the magnitude of the difference vector between the third body and the second body is greater than 3 times the third body radius, then call this a collision (3 times because other two bodies have a radius of thirdRadius*2, divide by 400 because radius is in pygame coords)
+                    
+                    differenceVector = (self.thirdX - self.body2X, self.thirdY) #recalculate vector representing difference between bodies
+
+                    unitDifferenceVec = ( 3*self.thirdRadius/self.scale * differenceVector[0]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2), 3*self.thirdRadius/self.scale * differenceVector[1]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2) ) #normalize vector to be magnitude of 3*thirdRadius (such that you can get a minimum distance w/o collision)
+
+                    necessaryDisplacementVec = (unitDifferenceVec[0]-differenceVector[0], unitDifferenceVec[1]-differenceVector[1]) #calculate vector representing necessary displacement of third body out of collision
+
+                    print(necessaryDisplacementVec)
+
+                    #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
+                    self.thirdX + necessaryDisplacementVec[0]
+                    self.thirdY + necessaryDisplacementVec[1]
+                    self.thirdXvel = 0
+                    self.thirdYvel = 0
+
                 if i % 100 == 0: #save position value every 100 calculations
                     self.add_pos(self.thirdRenderX, self.thirdRenderY) 
 
@@ -257,9 +316,7 @@ class Sim:
         self.initial_zVel_input.update()
 
         #update pygame render coords
-        self._update_pygame_coords()
-
-            
+        self._update_pygame_coords()        
 
     def on_render(self):
         
@@ -271,6 +328,10 @@ class Sim:
         self._display.blit(self.font.render("Third body y = {}".format(self.thirdY), True, (255, 255, 255)), (20, 60))
         self._display.blit(self.font.render("Third body z = {}".format(self.thirdZ), True, (255, 255, 255)), (20, 80))
 
+        self._display.blit(self.font.render("Third body x velocity = {}".format(self.thirdXvel), True, (255, 255, 255)), (20, 100))
+        self._display.blit(self.font.render("Third body y velocity = {}".format(self.thirdYvel), True, (255, 255, 255)), (20, 120))
+        self._display.blit(self.font.render("Third body z velocity = {}".format(self.thirdZvel), True, (255, 255, 255)), (20, 140))
+
         #render path of third body 
         for position, index in zip(self.thirdPrevious, list(range(len(self.thirdPrevious)))): #loop through all previous locations
             pygame.draw.circle(self._display, (0, 0, int(index * 200/self.pathLength) ), position, self.thirdRadius)
@@ -279,8 +340,8 @@ class Sim:
         pygame.draw.circle(self._display, self.thirdColor, (self.thirdRenderX, self.thirdRenderY), self.thirdRadius)
 
         #render first and second body 
-        pygame.draw.circle(self._display, (255,0,0), ( self.centerX + self.body1X*self.xScale, self.centerY ), self.thirdRadius*2 )
-        pygame.draw.circle(self._display, (255, 0,0), ( self.centerX + self.body2X*self.xScale, self.centerY ), self.thirdRadius*2 )
+        pygame.draw.circle(self._display, (255,0,0), ( self.centerX + self.body1X*self.scale, self.centerY ), self.thirdRadius*2 )
+        pygame.draw.circle(self._display, (255, 0,0), ( self.centerX + self.body2X*self.scale, self.centerY ), self.thirdRadius*2 )
 
         #render text box labels
         self._display.blit(self.font.render("lambda value: ", True, (255, 255, 255)), (self.windowWidth-300, 20))
@@ -326,8 +387,8 @@ class Sim:
         """
 
         #update pygame coordinates for third body. Center pixel plus x and y coords multiplied by scaler
-        self.thirdRenderX = self.centerX + self.xScale * self.thirdX 
-        self.thirdRenderY = self.centerY + self.yScale * self.thirdY * -1 
+        self.thirdRenderX = self.centerX + self.scale * self.thirdX 
+        self.thirdRenderY = self.centerY + self.scale * self.thirdY * -1 
 
     def _updateX(self, x, xVel, xAcc, t=0.0001):
         """

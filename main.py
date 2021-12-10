@@ -82,10 +82,10 @@ class Sim:
 
         self.l = 0.7 #define the lambda for the equations. 0 < lambda < 1
 
-        #set initial conditions for initial x and x velocity and y and y velocity and z and z velocity
-        self.thirdX = 0.2
+        #set initial conditions for initial x and x velocity and y and y velocity and z and z velocity (x=0.26, y=0 is cool)
+        self.thirdX = 0.26 
         self.thirdXvel = 0
-        self.thirdY = math.sqrt(3)/2 + 10**(-7)
+        self.thirdY = 0
         self.thirdYvel = 0
         self.thirdZ = 0
         self.thirdZvel = 0
@@ -232,8 +232,8 @@ class Sim:
                     necessaryDisplacementVec = (unitDifferenceVec[0]-differenceVector[0], unitDifferenceVec[1]-differenceVector[1]) #calculate vector representing necessary displacement of third body out of collision
 
                     #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
-                    self.thirdX + necessaryDisplacementVec[0]
-                    self.thirdY + necessaryDisplacementVec[1]
+                    self.thirdX + necessaryDisplacementVec[0] + 10**(-2) #add little bit extra to allow for movement
+                    self.thirdY + necessaryDisplacementVec[1] + 10**(-2) #add little bit extra to allow for movement
                     self.thirdXvel = 0
                     self.thirdYvel = 0
 
@@ -245,8 +245,8 @@ class Sim:
                     necessaryDisplacementVec = (unitDifferenceVec[0]-differenceVector[0], unitDifferenceVec[1]-differenceVector[1]) #calculate vector representing necessary displacement of third body out of collision
 
                     #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
-                    self.thirdX + necessaryDisplacementVec[0]
-                    self.thirdY + necessaryDisplacementVec[1]
+                    self.thirdX + necessaryDisplacementVec[0] + 10**(-2) #add little bit extra to allow for movement
+                    self.thirdY + necessaryDisplacementVec[1] + 10**(-2) #add little bit extra to allow for movement
                     self.thirdXvel = 0
                     self.thirdYvel = 0
 
@@ -321,8 +321,8 @@ class Sim:
                     print(necessaryDisplacementVec)
 
                     #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
-                    self.thirdX + necessaryDisplacementVec[0]
-                    self.thirdY + necessaryDisplacementVec[1]
+                    self.thirdX + necessaryDisplacementVec[0] + 10**(-2) #add little bit extra to allow for movement
+                    self.thirdY + necessaryDisplacementVec[1] + 10**(-2) #add little bit extra to allow for movement
                     self.thirdXvel = 0
                     self.thirdYvel = 0
 
@@ -337,8 +337,8 @@ class Sim:
                     print(necessaryDisplacementVec)
 
                     #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
-                    self.thirdX + necessaryDisplacementVec[0]
-                    self.thirdY + necessaryDisplacementVec[1]
+                    self.thirdX + necessaryDisplacementVec[0] + 10**(-2) #add little bit extra to allow for movement
+                    self.thirdY + necessaryDisplacementVec[1] + 10**(-2) #add little bit extra to allow for movement
                     self.thirdXvel = 0
                     self.thirdYvel = 0
 

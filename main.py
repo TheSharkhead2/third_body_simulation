@@ -2,6 +2,7 @@
 import pygame, sys, random, math
 from pygame.locals import *
 from screeninfo import get_monitors #found in: https://stackoverflow.com/questions/3129322/how-do-i-get-monitor-resolution-in-python
+import numpy as np
 
 class InputBox:
     """
@@ -71,7 +72,7 @@ class Sim:
         self.centerX = int(self.windowWidth/2)
         self.centerY = int(self.windowHeight/2)
 
-        self.thirdRadius = 8 #radius of circle (third body rendered)
+        self.thirdRadius = 0.01 #radius of circle (third body rendered)
         self.thirdColor = (0, 0, 255) #color of third body
 
         self.tPerFrame = 1000 #number of delta Ts renders per frame
@@ -102,8 +103,12 @@ class Sim:
         self.body1X = self.l
         self.body2X = self.l - 1
 
+        self.bodyRadius = 0.02
+
         self.thirdPrevious = [] #list of previous locations of third body to make path
         self.pathLength = 1200 #number of saved positions in path
+
+        self.collided = False
 
     def on_init(self):
         pygame.init()
@@ -132,8 +137,9 @@ class Sim:
         #errors for starting at lagrange point (if you want to look at behavor not quite exactly at point)
         self.lagrange_point_errorX = InputBox(self.windowWidth-195, 260, 195, 30, self.font, text="0")
         self.lagrange_point_errorY = InputBox(self.windowWidth-195, 290, 195, 30, self.font, text="0")
+        self.lagrange_point_errorZ = InputBox(self.windowWidth-195, 320, 195, 30, self.font, text="0")
 
-        self.scale_input = InputBox(self.windowWidth-340, 320, 340, 30, self.font, text=str(self.scale)) #input box for changing scale
+        self.scale_input = InputBox(self.windowWidth-340, 350, 340, 30, self.font, text=str(self.scale)) #input box for changing scale
 
     def add_pos(self, x, y):
         """
@@ -152,8 +158,21 @@ class Sim:
         self.thirdYacc = None
         self.thirdZacc = None
 
-        self.body1X = self.l
-        self.body2X = self.l - 1
+        self.collided = False #it hasn't collided yet
+
+        #0 = x(x-l)^2(x+1-l)^2+l(x-l)^2-(1-l)(x+1-l)^2 <--- qunintic for L1,2,3
+        
+        #P = [(L - 1)^3 + L^3, L^2*(L - 1)^2 - (2*L - 2)*(L - 1) - 2*L^2, 2*L - L^2*(2*L - 2) - 2*L*(L - 1)^2 - 1, (L - 1)^2 + L^2 + 2*L*(2*L - 2), 2 - 4*L, 1]
+
+        #three cases for L1, L2, and L3:
+        # L2 : 0 = -x(x-l)^2(x+1-l)^2 - l(x-l)^2 - (1-l)(x+1-l)^2
+        # L1 : 0 = -x(x-l)^2(x+1-l)^2 - l(x-l)^2 + (1-l)(x+1-l)^2
+        # L3 : 0 = -x(x-l)^2(x+1-l)^2 + l(x-l)^2 + (1-l)(x+1-l)^2
+
+        #these as coefficients (calculated by wolfram alpha)
+        #L2 : [-1, (4L - 2), (-6L**2 + 6L - 1), (4L**3 - 6L**2 + 2L - 1), (-L**4 + 2L**3 - L**2 + 4L - 2), (-3L**2 + 3L - 1)]
+        #L1 : [-1, (4L - 2), (-6L**2 + 6L - 1), (4L**3 - 6L**2 + 1), (-L**4 + 2L**3 + 3L**2 - 4L + 2), (3L**2 - 3L + 1)]
+        #L3 : [-1, (4L - 2), (-6L**2 + 6L - 1), (4L**3 - 6L**2 + 2L + 1), (-L**4 + 2L**3 - L**2 - 4L + 2), (3L**2 - 3L + 1)]
 
         if self.lagrange_point_input.text == "4": #if the user specified starting at L4, override other settings and start there
             self.l = float(self.initial_l_input.text) #only take in other parameter of lambda as it affects lagrange points
@@ -162,7 +181,7 @@ class Sim:
             self.thirdYvel = 0
             self.thirdZvel = 0
 
-            self.thirdZ = 0 #just set z to 0, it doesn't matter
+            self.thirdZ = 0 + float(self.lagrange_point_errorZ.text) #just set z to 0 plus the error... This is for Fan Fan
 
             self.thirdX = self.l - 0.5 + float(self.lagrange_point_errorX.text) #defined x coord plus error
             self.thirdY = (math.sqrt(3)/2) + float(self.lagrange_point_errorY.text) #defined y coord plus error
@@ -174,10 +193,72 @@ class Sim:
             self.thirdYvel = 0
             self.thirdZvel = 0
 
-            self.thirdZ = 0 #just set z to 0, it doesn't matter
+            self.thirdZ = 0 + float(self.lagrange_point_errorZ.text) #just set z to 0 plus the error... This is for Fan Fan
 
             self.thirdX = self.l - 0.5 + float(self.lagrange_point_errorX.text) #defined x coord plus error
             self.thirdY = -(math.sqrt(3)/2) + float(self.lagrange_point_errorY.text) #defined y coord plus error
+
+        elif self.lagrange_point_input.text == "2": #looking at second lagrange point
+            self.l = float(self.initial_l_input.text) #only take in other parameter of lambda as it affects lagrange points
+            #calculate roots of coorisponding polynomial
+            lRoots = (np.roots([-1, (4*self.l - 2), (-6*(self.l**2) + 6*self.l - 1), (4*(self.l**3) - 6*(self.l**2) + 2*self.l - 1), (-(self.l**4) + 2*(self.l**3) - self.l**2 + 4*self.l - 2), (-3*(self.l**2) + 3*self.l - 1)]))
+
+            #take only real roots --> this should just return one root. But could not in some cases I don't see? 
+            lRoots = [i.real for i in lRoots if i.imag == 0] #take only real roots
+            print(lRoots)
+            
+            #reset velocities
+            self.thirdXvel = 0
+            self.thirdYvel = 0
+            self.thirdZvel = 0
+
+            self.thirdZ = 0 + float(self.lagrange_point_errorZ.text) #just set z to 0 plus the error... This is for Fan Fan
+
+            self.thirdX = lRoots[0] + float(self.lagrange_point_errorX.text) #defined x coord plus error
+            self.thirdY = 0 + float(self.lagrange_point_errorY.text) #defined y coord plus error (y is just 0)
+        
+        elif self.lagrange_point_input.text == "3": #looking at second lagrange point
+            self.l = float(self.initial_l_input.text) #only take in other parameter of lambda as it affects lagrange points
+            #calculate roots of coorisponding polynomial
+            lRoots = (np.roots([-1, (4*self.l - 2), (-6*(self.l**2) + 6*self.l - 1), (4*(self.l**3) - 6*(self.l**2) + 2*self.l + 1), (-(self.l**4) + 2*(self.l**3) - self.l**2 - 4*self.l + 2), (3*(self.l**2) - 3*self.l + 1)]))
+
+            #take only real roots --> this should just return one root. But could not in some cases I don't see? 
+            lRoots = [i.real for i in lRoots if i.imag == 0] #take only real roots
+            print(lRoots)
+            
+            #reset velocities
+            self.thirdXvel = 0
+            self.thirdYvel = 0
+            self.thirdZvel = 0
+
+            self.thirdZ = 0 + float(self.lagrange_point_errorZ.text) #just set z to 0 plus the error... This is for Fan Fan
+
+            self.thirdX = lRoots[0] + float(self.lagrange_point_errorX.text) #defined x coord plus error
+            self.thirdY = 0 + float(self.lagrange_point_errorY.text) #defined y coord plus error (y is just 0)
+
+        elif self.lagrange_point_input.text == "1": #looking at second lagrange point
+            self.l = float(self.initial_l_input.text) #only take in other parameter of lambda as it affects lagrange points
+            #calculate roots of coorisponding polynomial
+            lRoots = (np.roots([-1, (4*self.l - 2), (-6*(self.l**2) + 6*self.l - 1), (4*(self.l)**3 - 6*(self.l**2) + 1), (-(self.l**4) + 2*(self.l**3) + 3*(self.l**2) - 4*self.l + 2), (3*(self.l**2) - 3*self.l + 1)]))
+
+            #take only real roots --> this should just return one root. But could not in some cases I don't see? 
+            lRoots = [i.real for i in lRoots if i.imag == 0] #take only real roots
+
+            print(lRoots)
+
+            #take only roots that are between two bodies (this hopefully is just one value)
+            lRoots = [i for i in lRoots if (self.body2X < i < self.body1X)]
+            print(lRoots)
+            
+            #reset velocities
+            self.thirdXvel = 0
+            self.thirdYvel = 0
+            self.thirdZvel = 0
+
+            self.thirdZ = 0 + float(self.lagrange_point_errorZ.text) #just set z to 0 plus the error... This is for Fan Fan
+
+            self.thirdX = lRoots[0] + float(self.lagrange_point_errorX.text) #defined x coord plus error
+            self.thirdY = 0 + float(self.lagrange_point_errorY.text) #defined y coord plus error (y is just 0)
 
         else: #if no lagrange point is specified, use defined initial values
             #set initial values based on text box
@@ -188,6 +269,12 @@ class Sim:
             self.thirdYvel = float(self.initial_yVel_input.text)
             self.thirdZ = float(self.initial_z_input.text)
             self.thirdZvel = float(self.initial_zVel_input.text)
+
+        #reset these after lambda value is changed
+        self.body1X = self.l
+        self.body2X = self.l - 1
+
+        self.thirdPrevious = [] #clear path
 
     def on_event(self, event):
         if event.type == QUIT:
@@ -209,13 +296,14 @@ class Sim:
         self.lagrange_point_input.handle_event(event)
         self.lagrange_point_errorX.handle_event(event)
         self.lagrange_point_errorY.handle_event(event)
+        self.lagrange_point_errorZ.handle_event(event)
         self.scale_input.handle_event(event)
 
     def on_loop(self):
 
         ### SHOULD ADD COLLISION DETECTION ###
 
-        if self.updateOrder == "together":
+        if self.updateOrder == "together" and not self.collided: #don't run if has collided
             for i in range(self.tPerFrame): #run position updates set number of times
                 #update accelerations for x, y, and z 
                 self._calc_d2dx()
@@ -227,36 +315,14 @@ class Sim:
                 self.thirdY,self.thirdYvel = self._updateX(self.thirdY, self.thirdYvel, self.thirdYacc, t=self.deltaT)
                 self.thirdZ,self.thirdZvel = self._updateX(self.thirdZ, self.thirdZvel, self.thirdZacc, t=self.deltaT)
 
-                if (math.sqrt((self.thirdX - self.body1X)**2 + (self.thirdY)**2)) < ((self.thirdRadius*3)/self.scale): #if the magnitude of the difference vector between the third body and the first body is greater than 3 times the third body radius, then call this a collision (3 times because other two bodies have a radius of thirdRadius*2, divide by 400 because radius is in pygame coords)
-                    differenceVector = (self.thirdX - self.body1X, self.thirdY) #recalculate vector representing difference between bodies
-
-                    unitDifferenceVec = ( 3*self.thirdRadius/self.scale * differenceVector[0]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2), 3*self.thirdRadius/self.scale * differenceVector[1]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2) ) #normalize vector to be magnitude of 3*thirdRadius (such that you can get a minimum distance w/o collision)
-
-                    necessaryDisplacementVec = (unitDifferenceVec[0]-differenceVector[0], unitDifferenceVec[1]-differenceVector[1]) #calculate vector representing necessary displacement of third body out of collision
-
-                    #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
-                    self.thirdX + necessaryDisplacementVec[0] + 10**(-2) #add little bit extra to allow for movement
-                    self.thirdY + necessaryDisplacementVec[1] + 10**(-2) #add little bit extra to allow for movement
-                    self.thirdXvel = 0
-                    self.thirdYvel = 0
-
-                if (math.sqrt((self.thirdX - self.body2X)**2 + (self.thirdY)**2)) < ((self.thirdRadius*3)/self.scale): #if the magnitude of the difference vector between the third body and the second body is greater than 3 times the third body radius, then call this a collision (3 times because other two bodies have a radius of thirdRadius*2, divide by 400 because radius is in pygame coords)
-                    differenceVector = (self.thirdX - self.body2X, self.thirdY) #recalculate vector representing difference between bodies
-
-                    unitDifferenceVec = ( 3*self.thirdRadius/self.scale * differenceVector[0]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2), 3*self.thirdRadius/self.scale * differenceVector[1]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2) ) #normalize vector to be magnitude of 3*thirdRadius (such that you can get a minimum distance w/o collision)
-
-                    necessaryDisplacementVec = (unitDifferenceVec[0]-differenceVector[0], unitDifferenceVec[1]-differenceVector[1]) #calculate vector representing necessary displacement of third body out of collision
-
-                    #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
-                    self.thirdX + necessaryDisplacementVec[0] + 10**(-2) #add little bit extra to allow for movement
-                    self.thirdY + necessaryDisplacementVec[1] + 10**(-2) #add little bit extra to allow for movement
-                    self.thirdXvel = 0
-                    self.thirdYvel = 0
+                #run collision detection
+                self._collision_detection(1)
+                self._collision_detection(2)
 
                 if i % 100 == 0: #save position value every 100 calculations
                     self.add_pos(self.thirdRenderX, self.thirdRenderY)    
         
-        elif self.updateOrder == "random":
+        elif self.updateOrder == "random" and not self.collided: #don't run if has collided
             for i in range(self.tPerFrame): #run position updates set number of times
                 randomSeed = random.randint(1,6) #6 options for update order
 
@@ -313,33 +379,9 @@ class Sim:
                         self._calc_d2dx()
                         self.thirdX,self.thirdXvel = self._updateX(self.thirdX, self.thirdXvel, self.thirdXacc, t=self.deltaT)
 
-                if (math.sqrt((self.thirdX - self.body1X)**2 + (self.thirdY)**2)) < ((self.thirdRadius*3)/self.scale): #if the magnitude of the difference vector between the third body and the first body is greater than 3 times the third body radius, then call this a collision (3 times because other two bodies have a radius of thirdRadius*2, divide by 400 because radius is in pygame coords)
-
-                    differenceVector = (self.thirdX - self.body1X, self.thirdY) #recalculate vector representing difference between bodies
-
-                    unitDifferenceVec = ( 3*self.thirdRadius/self.scale * differenceVector[0]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2), 3*self.thirdRadius/self.scale * differenceVector[1]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2) ) #normalize vector to be magnitude of 3*thirdRadius (such that you can get a minimum distance w/o collision)
-
-                    necessaryDisplacementVec = (unitDifferenceVec[0]-differenceVector[0], unitDifferenceVec[1]-differenceVector[1]) #calculate vector representing necessary displacement of third body out of collision
-
-                    #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
-                    self.thirdX + necessaryDisplacementVec[0] + 10**(-2) #add little bit extra to allow for movement
-                    self.thirdY + necessaryDisplacementVec[1] + 10**(-2) #add little bit extra to allow for movement
-                    self.thirdXvel = 0
-                    self.thirdYvel = 0
-
-                if (math.sqrt((self.thirdX - self.body2X)**2 + (self.thirdY)**2)) < ((self.thirdRadius*3)/self.scale): #if the magnitude of the difference vector between the third body and the second body is greater than 3 times the third body radius, then call this a collision (3 times because other two bodies have a radius of thirdRadius*2, divide by 400 because radius is in pygame coords)
-                    
-                    differenceVector = (self.thirdX - self.body2X, self.thirdY) #recalculate vector representing difference between bodies
-
-                    unitDifferenceVec = ( 3*self.thirdRadius/self.scale * differenceVector[0]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2), 3*self.thirdRadius/self.scale * differenceVector[1]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2) ) #normalize vector to be magnitude of 3*thirdRadius (such that you can get a minimum distance w/o collision)
-
-                    necessaryDisplacementVec = (unitDifferenceVec[0]-differenceVector[0], unitDifferenceVec[1]-differenceVector[1]) #calculate vector representing necessary displacement of third body out of collision
-
-                    #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
-                    self.thirdX + necessaryDisplacementVec[0] + 10**(-2) #add little bit extra to allow for movement
-                    self.thirdY + necessaryDisplacementVec[1] + 10**(-2) #add little bit extra to allow for movement
-                    self.thirdXvel = 0
-                    self.thirdYvel = 0
+                #run collision detection
+                self._collision_detection(1)
+                self._collision_detection(2)
 
                 if i % 100 == 0: #save position value every 100 calculations
                     self.add_pos(self.thirdRenderX, self.thirdRenderY) 
@@ -381,14 +423,14 @@ class Sim:
 
         #render path of third body 
         for position, index in zip(self.thirdPrevious, list(range(len(self.thirdPrevious)))): #loop through all previous locations
-            pygame.draw.circle(self._display, (0, 0, int(index * 200/self.pathLength) ), position, self.thirdRadius)
+            pygame.draw.circle(self._display, (0, 0, int(index * 200/self.pathLength) ), position, int(self.thirdRadius * self.scale))
 
         #render third body
-        pygame.draw.circle(self._display, self.thirdColor, (self.thirdRenderX, self.thirdRenderY), self.thirdRadius)
+        pygame.draw.circle(self._display, self.thirdColor, (self.thirdRenderX, self.thirdRenderY), int(self.thirdRadius * self.scale))
 
         #render first and second body 
-        pygame.draw.circle(self._display, (255,0,0), ( self.centerX + self.body1X*self.scale, self.centerY ), self.thirdRadius*2 )
-        pygame.draw.circle(self._display, (255, 0,0), ( self.centerX + self.body2X*self.scale, self.centerY ), self.thirdRadius*2 )
+        pygame.draw.circle(self._display, (255,0,0), ( self.centerX + self.body1X*self.scale, self.centerY ), int(self.bodyRadius * self.scale) )
+        pygame.draw.circle(self._display, (255, 0,0), ( self.centerX + self.body2X*self.scale, self.centerY ), int(self.bodyRadius * self.scale)  )
 
         #render text box labels
         self._display.blit(self.font.render("lambda value: ", True, (255, 255, 255)), (self.windowWidth-400, 20))
@@ -401,7 +443,8 @@ class Sim:
         self._display.blit(self.font.render("Lagrange Point: ", True, (255, 255, 255)), (self.windowWidth-400, 230))
         self._display.blit(self.font.render("Lagrange Point Error X: ", True, (255, 255, 255)), (self.windowWidth-400, 260))
         self._display.blit(self.font.render("Lagrange Point Error Y: ", True, (255, 255, 255)), (self.windowWidth-400, 290))
-        self._display.blit(self.font.render("Scale: ", True, (255, 255, 255)), (self.windowWidth-400, 320))
+        self._display.blit(self.font.render("Lagrange Point Error Z: ", True, (255, 255, 255)), (self.windowWidth-400, 320))
+        self._display.blit(self.font.render("Scale: ", True, (255, 255, 255)), (self.windowWidth-400, 350))
 
         #draw all text boxes
         self.initial_l_input.draw(self._display)
@@ -414,6 +457,7 @@ class Sim:
         self.lagrange_point_input.draw(self._display)
         self.lagrange_point_errorX.draw(self._display)
         self.lagrange_point_errorY.draw(self._display)
+        self.lagrange_point_errorZ.draw(self._display)
         self.scale_input.draw(self._display)
 
     def on_quit(self):
@@ -431,6 +475,26 @@ class Sim:
             self.on_render()
             pygame.display.update()
         self.on_quit()
+
+    def _collision_detection(self, bodyNumber):
+        if bodyNumber == 1:
+            centerX = self.body1X
+        elif bodyNumber == 2:
+            centerX = self.body2X
+
+        total_radius = self.bodyRadius + self.thirdRadius
+        differenceVector = (self.thirdX - centerX, self.thirdY) #recalculate vector representing difference between bodies
+        norm = math.sqrt(differenceVector[0]**2 + differenceVector[1]**2)
+        unitDifference = [elem/norm for elem in differenceVector]
+        difference = total_radius - norm
+
+        if difference > 0:
+            self.thirdX -= unitDifference[0] * difference
+            self.thirdY -= unitDifference[1] * difference
+            self.thirdXvel = 0
+            self.thirdYvel = 0
+            self.collided = True #set true for collision 
+        
 
     def _update_pygame_coords(self):
         """

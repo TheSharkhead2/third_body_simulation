@@ -78,11 +78,11 @@ class Sim:
         self.deltaT = 0.00001 #define standard time increment 
 
         #set scale from x and y coords to pygame coords
-        self.scale = 400
+        self.scale = 800
 
         self.l = 0.7 #define the lambda for the equations. 0 < lambda < 1
 
-        #set initial conditions for initial x and x velocity and y and y velocity and z and z velocity (x=0.26, y=0 is cool)
+        #set initial conditions for initial x and x velocity and y and y velocity and z and z velocity (x=0.26, y=0 is cool) (x=0.5, y=0.34, l=0.7, scale=1000 is cool)
         self.thirdX = 0.26 
         self.thirdXvel = 0
         self.thirdY = 0
@@ -151,6 +151,9 @@ class Sim:
         self.thirdXacc = None
         self.thirdYacc = None
         self.thirdZacc = None
+
+        self.body1X = self.l
+        self.body2X = self.l - 1
 
         if self.lagrange_point_input.text == "4": #if the user specified starting at L4, override other settings and start there
             self.l = float(self.initial_l_input.text) #only take in other parameter of lambda as it affects lagrange points
@@ -318,8 +321,6 @@ class Sim:
 
                     necessaryDisplacementVec = (unitDifferenceVec[0]-differenceVector[0], unitDifferenceVec[1]-differenceVector[1]) #calculate vector representing necessary displacement of third body out of collision
 
-                    print(necessaryDisplacementVec)
-
                     #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
                     self.thirdX + necessaryDisplacementVec[0] + 10**(-2) #add little bit extra to allow for movement
                     self.thirdY + necessaryDisplacementVec[1] + 10**(-2) #add little bit extra to allow for movement
@@ -333,8 +334,6 @@ class Sim:
                     unitDifferenceVec = ( 3*self.thirdRadius/self.scale * differenceVector[0]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2), 3*self.thirdRadius/self.scale * differenceVector[1]/math.sqrt(differenceVector[0]**2 + differenceVector[1]**2) ) #normalize vector to be magnitude of 3*thirdRadius (such that you can get a minimum distance w/o collision)
 
                     necessaryDisplacementVec = (unitDifferenceVec[0]-differenceVector[0], unitDifferenceVec[1]-differenceVector[1]) #calculate vector representing necessary displacement of third body out of collision
-
-                    print(necessaryDisplacementVec)
 
                     #update third body coordinates and set velocities to 0 (only way to keep it not from flying away)
                     self.thirdX + necessaryDisplacementVec[0] + 10**(-2) #add little bit extra to allow for movement

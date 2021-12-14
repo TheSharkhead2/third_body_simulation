@@ -83,7 +83,7 @@ class Sim:
 
         self.l = 0.7 #define the lambda for the equations. 0 < lambda < 1
 
-        #set initial conditions for initial x and x velocity and y and y velocity and z and z velocity (x=0.26, y=0 is cool) (x=0.5, y=0.34, l=0.7, scale=1000 is cool)
+        #set initial conditions for initial x and x velocity and y and y velocity and z and z velocity (x=0.26, y=0 is cool) (x=0.48, y=0.34, l=0.7, scale=1000 is cool) (x=0.26, and then x=1, x=0.9, x=0.8, x=0.6 shows diversity of initial conditions (l=0.7))
         self.thirdX = 0.26 
         self.thirdXvel = 0
         self.thirdY = 0
@@ -166,12 +166,12 @@ class Sim:
 
         #three cases for L1, L2, and L3:
         # L2 : 0 = -x(x-l)^2(x+1-l)^2 - l(x-l)^2 - (1-l)(x+1-l)^2
-        # L1 : 0 = -x(x-l)^2(x+1-l)^2 - l(x-l)^2 + (1-l)(x+1-l)^2
+        # L1 : 0 = -x(x-l)^2(x+1-l)^2 + l(x-l)^2 - (1-l)(x+1-l)^2
         # L3 : 0 = -x(x-l)^2(x+1-l)^2 + l(x-l)^2 + (1-l)(x+1-l)^2
 
         #these as coefficients (calculated by wolfram alpha)
         #L2 : [-1, (4L - 2), (-6L**2 + 6L - 1), (4L**3 - 6L**2 + 2L - 1), (-L**4 + 2L**3 - L**2 + 4L - 2), (-3L**2 + 3L - 1)]
-        #L1 : [-1, (4L - 2), (-6L**2 + 6L - 1), (4L**3 - 6L**2 + 1), (-L**4 + 2L**3 + 3L**2 - 4L + 2), (3L**2 - 3L + 1)]
+        #L1 : [-1, (4L - 2), (-6L**2 + 6L - 1), (4L**3 - 6L**2 + 4L - 1), (-L**4 + 2L**3 - 5L**2 + 4L - 1), (2L**3 - 3L**2 + 3L - 1)]
         #L3 : [-1, (4L - 2), (-6L**2 + 6L - 1), (4L**3 - 6L**2 + 2L + 1), (-L**4 + 2L**3 - L**2 - 4L + 2), (3L**2 - 3L + 1)]
 
         if self.lagrange_point_input.text == "4": #if the user specified starting at L4, override other settings and start there
@@ -239,15 +239,10 @@ class Sim:
         elif self.lagrange_point_input.text == "1": #looking at second lagrange point
             self.l = float(self.initial_l_input.text) #only take in other parameter of lambda as it affects lagrange points
             #calculate roots of coorisponding polynomial
-            lRoots = (np.roots([-1, (4*self.l - 2), (-6*(self.l**2) + 6*self.l - 1), (4*(self.l)**3 - 6*(self.l**2) + 1), (-(self.l**4) + 2*(self.l**3) + 3*(self.l**2) - 4*self.l + 2), (3*(self.l**2) - 3*self.l + 1)]))
+            lRoots = (np.roots([-1, (4*self.l - 2), (-6*(self.l**2) + 6*self.l - 1), (4*(self.l**3) - 6*(self.l**2) + 4*self.l - 1), (-(self.l**4) + 2*(self.l**3) - 5*(self.l**2) + 4*self.l - 2), (2*(self.l**3) - 3*(self.l**2) + 3*self.l - 1)]))
 
             #take only real roots --> this should just return one root. But could not in some cases I don't see? 
             lRoots = [i.real for i in lRoots if i.imag == 0] #take only real roots
-
-            print(lRoots)
-
-            #take only roots that are between two bodies (this hopefully is just one value)
-            lRoots = [i for i in lRoots if (self.body2X < i < self.body1X)]
             print(lRoots)
             
             #reset velocities

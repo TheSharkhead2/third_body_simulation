@@ -83,7 +83,7 @@ class Sim:
 
         self.l = 0.7 #define the lambda for the equations. 0 < lambda < 1
 
-        #set initial conditions for initial x and x velocity and y and y velocity and z and z velocity (x=0.26, y=0 is cool) (x=0.48, y=0.34, l=0.7, scale=1000 is cool) (x=0.26, and then x=1, x=0.9, x=0.8, x=0.6 shows diversity of initial conditions (l=0.7))
+        #set initial conditions for initial x and x velocity and y and y velocity and z and z velocity (x=0.26, y=0 is cool) (x=0.48, y=0.34, l=0.7, scale=1000 is cool) (x=0.26, and then x=1, x=0.9, x=0.8, x=0.6 shows diversity of initial conditions (l=0.7)) (x=0, y=0.4, l=0.7)
         self.thirdX = 0.26 
         self.thirdXvel = 0
         self.thirdY = 0
@@ -296,8 +296,6 @@ class Sim:
 
     def on_loop(self):
 
-        ### SHOULD ADD COLLISION DETECTION ###
-
         if self.updateOrder == "together" and not self.collided: #don't run if has collided
             for i in range(self.tPerFrame): #run position updates set number of times
                 #update accelerations for x, y, and z 
@@ -315,7 +313,7 @@ class Sim:
                 self._collision_detection(2)
 
                 if i % 100 == 0: #save position value every 100 calculations
-                    self.add_pos(self.thirdRenderX, self.thirdRenderY)    
+                    self.add_pos(self.thirdX, self.thirdY)    
         
         elif self.updateOrder == "random" and not self.collided: #don't run if has collided
             for i in range(self.tPerFrame): #run position updates set number of times
@@ -379,7 +377,7 @@ class Sim:
                 self._collision_detection(2)
 
                 if i % 100 == 0: #save position value every 100 calculations
-                    self.add_pos(self.thirdRenderX, self.thirdRenderY) 
+                    self.add_pos(self.thirdX, self.thirdY) 
 
 
         #update all textboxes
@@ -418,7 +416,7 @@ class Sim:
 
         #render path of third body 
         for position, index in zip(self.thirdPrevious, list(range(len(self.thirdPrevious)))): #loop through all previous locations
-            pygame.draw.circle(self._display, (0, 0, int(index * 200/self.pathLength) ), position, int(self.thirdRadius * self.scale))
+            pygame.draw.circle(self._display, (0, 0, int(index * 200/self.pathLength) ), (self.centerX + position[0]*self.scale, self.centerY + position[1]*self.scale*-1), int(self.thirdRadius * self.scale))
 
         #render third body
         pygame.draw.circle(self._display, self.thirdColor, (self.thirdRenderX, self.thirdRenderY), int(self.thirdRadius * self.scale))

@@ -83,8 +83,8 @@ class Sim:
 
         self.l = 0.7 #define the lambda for the equations. 0 < lambda < 1
 
-        #set initial conditions for initial x and x velocity and y and y velocity and z and z velocity (x=0.26, y=0 is cool) (x=0.48, y=0.34, l=0.7, scale=1000 is cool) (x=0.26, and then x=1, x=0.9, x=0.8, x=0.6 shows diversity of initial conditions (l=0.7)) (x=0, y=0.4, l=0.7)
-        self.thirdX = 0.26 
+        #set initial conditions for initial x and x velocity and y and y velocity and z and z velocity (x=0.27, y=0 is cool) (x=0.48, y=0.34, l=0.7, scale=1000 is cool) (x=0.26, and then y=1, y=0.9, y=0.8, y=0.6 shows diversity of initial conditions (l=0.7)) (x=0, y=0.4, l=0.7) (x=0.26, y=0.5, l=0.7) (x=0.286, y=0, z=0.5, l=0.7)
+        self.thirdX = 0.27
         self.thirdXvel = 0
         self.thirdY = 0
         self.thirdYvel = 0

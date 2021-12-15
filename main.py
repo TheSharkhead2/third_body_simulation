@@ -160,10 +160,6 @@ class Sim:
 
         self.collided = False #it hasn't collided yet
 
-        #0 = x(x-l)^2(x+1-l)^2+l(x-l)^2-(1-l)(x+1-l)^2 <--- qunintic for L1,2,3
-        
-        #P = [(L - 1)^3 + L^3, L^2*(L - 1)^2 - (2*L - 2)*(L - 1) - 2*L^2, 2*L - L^2*(2*L - 2) - 2*L*(L - 1)^2 - 1, (L - 1)^2 + L^2 + 2*L*(2*L - 2), 2 - 4*L, 1]
-
         #three cases for L1, L2, and L3:
         # L2 : 0 = -x(x-l)^2(x+1-l)^2 - l(x-l)^2 - (1-l)(x+1-l)^2
         # L1 : 0 = -x(x-l)^2(x+1-l)^2 + l(x-l)^2 - (1-l)(x+1-l)^2
